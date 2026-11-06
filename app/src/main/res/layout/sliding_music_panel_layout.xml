@@ -52,4 +52,13 @@
         app:itemHorizontalTranslationEnabled="false"
         app:menu="@menu/bottom_navigation_main"
         tools:viewBindingType="com.google.android.material.navigation.NavigationBarView"/>
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/floatingMiniPlayerOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="false"
+        android:focusable="false"
+        android:visibility="gone"
+        android:elevation="24dp" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

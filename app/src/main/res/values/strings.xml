@@ -508,6 +508,9 @@
     <string name="pref_save_last_directory_summary">When switching to folder view, restore last used directory</string>
     <string name="pref_save_last_directory_title">Save Last Directory</string>
     <string name="go_to_artist">Go to artist</string>
+    <string name="floating_mini_player">Floating mini player</string>
+    <string name="hide_floating_mini_player">Hide floating mini player</string>
+    <string name="move_floating_mini_player">Move floating mini player</string>
 
     <!-- The following strings are unused but kept as non-translatable to resolve ExtraTranslation lint errors in 45+ languages without bulk-editing them. -->
     <string name="buy_now" translatable="false" />

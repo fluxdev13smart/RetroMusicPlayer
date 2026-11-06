@@ -64,5 +64,7 @@ interface Playback {
         fun onTrackEndedWithCrossfade()
 
         fun onPlayStateChanged()
+
+        fun onAudioSessionIdChanged(sessionId: Int) {}
     }
 }

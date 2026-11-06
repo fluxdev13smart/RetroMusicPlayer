@@ -121,6 +121,11 @@ abstract class AbsPlayerFragment(@LayoutRes layout: Int) : AbsMusicServiceFragme
                 return true
             }
 
+            R.id.action_floating_mini_player -> {
+                mainActivity.toggleFloatingMiniPlayer()
+                return true
+            }
+
             R.id.action_share -> {
                 SongShareDialog.create(song).show(childFragmentManager, "SHARE_SONG")
                 return true
