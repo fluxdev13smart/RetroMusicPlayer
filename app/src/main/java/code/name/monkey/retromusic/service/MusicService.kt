@@ -771,6 +771,12 @@ class MusicService : MediaBrowserServiceCompat(),
         notifyChange(PLAY_STATE_CHANGED)
     }
 
+    override fun onAudioSessionIdChanged(sessionId: Int) {
+        if (::playbackManager.isInitialized) {
+            playbackManager.updateAudioEffectSession(sessionId)
+        }
+    }
+
     override fun onUnbind(intent: Intent): Boolean {
         if (!isPlaying) {
             stopSelf()
