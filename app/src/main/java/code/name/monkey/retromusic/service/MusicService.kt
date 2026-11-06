@@ -1078,6 +1078,9 @@ class MusicService : MediaBrowserServiceCompat(),
             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ARTIST, song.albumArtist)
             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, song.albumName)
             .putString(MediaMetadataCompat.METADATA_KEY_TITLE, song.title)
+            .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, song.title)
+            .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE, song.artistName)
+            .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_DESCRIPTION, song.albumName)
             .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, song.duration)
             .putLong(
                 MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER,
@@ -1085,6 +1088,8 @@ class MusicService : MediaBrowserServiceCompat(),
             )
             .putLong(MediaMetadataCompat.METADATA_KEY_YEAR, song.year.toLong())
             .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, null)
+            .putBitmap(MediaMetadataCompat.METADATA_KEY_ART, null)
+            .putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, null)
             .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, playingQueue.size.toLong())
 
         // We must send the album art in METADATA_KEY_ALBUM_ART key on A13+ or
@@ -1103,13 +1108,13 @@ class MusicService : MediaBrowserServiceCompat(),
                 CustomTarget<Bitmap?>(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL) {
                 override fun onLoadFailed(errorDrawable: Drawable?) {
                     super.onLoadFailed(errorDrawable)
-                    metaData.putBitmap(
-                        MediaMetadataCompat.METADATA_KEY_ALBUM_ART,
-                        BitmapFactory.decodeResource(
-                            resources,
-                            R.drawable.default_audio_art
-                        )
+                    val defaultArtwork = BitmapFactory.decodeResource(
+                        resources,
+                        R.drawable.default_audio_art
                     )
+                    metaData.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, defaultArtwork)
+                    metaData.putBitmap(MediaMetadataCompat.METADATA_KEY_ART, defaultArtwork)
+                    metaData.putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, defaultArtwork)
                     mediaSession?.setMetadata(metaData.build())
                     onCompletion()
                 }
@@ -1118,10 +1123,9 @@ class MusicService : MediaBrowserServiceCompat(),
                     resource: Bitmap,
                     transition: Transition<in Bitmap?>?,
                 ) {
-                    metaData.putBitmap(
-                        MediaMetadataCompat.METADATA_KEY_ALBUM_ART,
-                        resource
-                    )
+                    metaData.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, resource)
+                    metaData.putBitmap(MediaMetadataCompat.METADATA_KEY_ART, resource)
+                    metaData.putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, resource)
                     mediaSession?.setMetadata(metaData.build())
                     onCompletion()
                 }
@@ -1439,6 +1443,7 @@ class MusicService : MediaBrowserServiceCompat(),
         mediaSession?.setCallback(mediaSessionCallback)
         mediaSession?.isActive = true
         mediaSession?.setMediaButtonReceiver(mediaButtonReceiverPendingIntent)
+        mediaSession?.let { setSessionToken(it.sessionToken) }
     }
 
     inner class MusicBinder : Binder() {
@@ -1495,3 +1500,4 @@ class MusicService : MediaBrowserServiceCompat(),
                 or PlaybackStateCompat.ACTION_SEEK_TO)
     }
 }
+
