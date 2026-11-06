@@ -77,6 +77,7 @@ import code.name.monkey.retromusic.fragments.LibraryViewModel
 import code.name.monkey.retromusic.fragments.NowPlayingScreen
 import code.name.monkey.retromusic.fragments.NowPlayingScreen.*
 import code.name.monkey.retromusic.fragments.base.AbsPlayerFragment
+import code.name.monkey.retromusic.fragments.other.FloatingMiniPlayerFragment
 import code.name.monkey.retromusic.fragments.other.MiniPlayerFragment
 import code.name.monkey.retromusic.fragments.player.adaptive.AdaptiveFragment
 import code.name.monkey.retromusic.fragments.player.blur.BlurPlayerFragment
@@ -329,6 +330,32 @@ abstract class AbsSlidingMusicPanelActivity : AbsMusicServiceActivity(),
 
     fun expandPanel() {
         bottomSheetBehavior.state = STATE_EXPANDED
+    }
+
+    fun toggleFloatingMiniPlayer() {
+        val overlay = binding.floatingMiniPlayerOverlay
+        if (overlay.isVisible) {
+            hideFloatingMiniPlayer()
+            return
+        }
+        val floatingPlayerFragment =
+            supportFragmentManager.findFragmentById(R.id.floatingMiniPlayerOverlay)
+        if (floatingPlayerFragment == null || floatingPlayerFragment.isRemoving) {
+            supportFragmentManager.beginTransaction()
+                .setReorderingAllowed(true)
+                .add(R.id.floatingMiniPlayerOverlay, FloatingMiniPlayerFragment())
+                .commitNow()
+        }
+        overlay.isVisible = true
+    }
+
+    fun hideFloatingMiniPlayer() {
+        binding.floatingMiniPlayerOverlay.isGone = true
+        supportFragmentManager.findFragmentById(R.id.floatingMiniPlayerOverlay)?.let {
+            if (!supportFragmentManager.isStateSaved) {
+                supportFragmentManager.commit { remove(it) }
+            }
+        }
     }
 
     private fun setMiniPlayerAlphaProgress(progress: Float) {
