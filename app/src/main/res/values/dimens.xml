@@ -14,6 +14,8 @@
     <dimen name="mini_player_height">56dp</dimen>
     <dimen name="bottom_nav_height">80dp</dimen>
     <dimen name="bottom_nav_mini_player_height">136dp</dimen>
+    <dimen name="floating_mini_player_bottom_margin">96dp</dimen>
+    <dimen name="floating_mini_player_edge_margin">16dp</dimen>
 
     <dimen name="app_widget_classic_height">96dp</dimen>
     <dimen name="app_widget_classic_image_size">96dp</dimen>

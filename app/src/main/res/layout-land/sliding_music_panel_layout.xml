@@ -55,4 +55,13 @@
             tools:layout="@layout/fragment_mini_player" />
 
     </FrameLayout>
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/floatingMiniPlayerOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="false"
+        android:focusable="false"
+        android:visibility="gone"
+        android:elevation="24dp" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

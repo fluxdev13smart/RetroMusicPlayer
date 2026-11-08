@@ -223,6 +223,11 @@ class RetroExoPlayer(context: Context) : AudioManagerPlayback(context), Player.L
         }
     }
 
+    @OptIn(UnstableApi::class)
+    override fun onAudioSessionIdChanged(audioSessionId: Int) {
+        callbacks?.onAudioSessionIdChanged(audioSessionId)
+    }
+
     override fun onPlayerError(error: PlaybackException) {
         logE(error)
         isInitialized = false

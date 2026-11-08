@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clickable="false"
+    android:focusable="false">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/floatingPlayerCard"
+        android:layout_width="wrap_content"
+        android:layout_height="112dp"
+        android:minWidth="280dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginStart="@dimen/floating_mini_player_edge_margin"
+        android:layout_marginEnd="@dimen/floating_mini_player_edge_margin"
+        android:layout_marginBottom="@dimen/floating_mini_player_bottom_margin"
+        app:cardBackgroundColor="?attr/colorSurface"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="8dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="12dp"
+            android:paddingEnd="8dp">
+
+            <FrameLayout
+                android:id="@+id/floatingPlayerDragHandle"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:contentDescription="@string/move_floating_mini_player"
+                android:clickable="true"
+                android:focusable="true"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <View
+                    android:layout_width="24dp"
+                    android:layout_height="3dp"
+                    android:layout_gravity="center"
+                    android:alpha="0.28"
+                    android:background="?attr/colorControlNormal" />
+            </FrameLayout>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/artwork"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:scaleType="centerCrop"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/floatingPlayerDragHandle" />
+
+            <LinearLayout
+                android:id="@+id/trackInfo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="@id/artwork"
+                app:layout_constraintEnd_toStartOf="@id/actionPlayPause"
+                app:layout_constraintStart_toEndOf="@id/artwork"
+                app:layout_constraintTop_toTopOf="@id/artwork">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextViewNormal"
+                    android:textColor="?android:attr/textColorPrimary" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/artist"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextViewCaption"
+                    android:textColor="?android:attr/textColorSecondary" />
+            </LinearLayout>
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/actionPlayPause"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="?attr/roundSelector"
+                android:contentDescription="@string/action_play_pause"
+                android:padding="10dp"
+                android:scaleType="center"
+                app:layout_constraintBottom_toBottomOf="@id/artwork"
+                app:layout_constraintEnd_toStartOf="@id/actionNext"
+                app:layout_constraintTop_toTopOf="@id/artwork"
+                app:srcCompat="@drawable/ic_pause"
+                app:tint="?attr/colorControlNormal" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/actionNext"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="?attr/roundSelector"
+                android:contentDescription="@string/action_next"
+                android:padding="10dp"
+                android:scaleType="center"
+                app:layout_constraintBottom_toBottomOf="@id/artwork"
+                app:layout_constraintEnd_toStartOf="@id/actionDismiss"
+                app:layout_constraintTop_toTopOf="@id/artwork"
+                app:srcCompat="@drawable/ic_skip_next"
+                app:tint="?attr/colorControlNormal" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/actionDismiss"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="?attr/roundSelector"
+                android:contentDescription="@string/hide_floating_mini_player"
+                android:padding="10dp"
+                android:scaleType="center"
+                app:layout_constraintBottom_toBottomOf="@id/artwork"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/artwork"
+                app:srcCompat="@drawable/ic_close"
+                app:tint="?attr/colorControlNormal" />
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/progressBar"
+                android:layout_width="0dp"
+                android:layout_height="2dp"
+                android:indeterminate="false"
+                android:max="1000"
+                android:progress="0"
+                app:indicatorColor="?attr/colorPrimary"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
+</FrameLayout>

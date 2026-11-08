@@ -18,6 +18,7 @@ class PlaybackManager(val context: Context) {
 
     var playback: Playback? = null
     private var playbackLocation = PlaybackLocation.LOCAL
+    private var audioEffectSessionId = 0
 
     val isLocalPlayback get() = playbackLocation == PlaybackLocation.LOCAL
 
@@ -58,7 +59,6 @@ class PlaybackManager(val context: Context) {
             if (!playback!!.isInitialized) {
                 onNotInitialized()
             } else {
-                openAudioEffectSession()
                 if (playbackLocation == PlaybackLocation.LOCAL) {
                     if (playback is CrossFadePlayer) {
                         if (!(playback as CrossFadePlayer).isCrossFading) {
@@ -68,7 +68,9 @@ class PlaybackManager(val context: Context) {
                         AudioFader.startFadeAnimator(playback!!, true)
                     }
                 }
-                playback?.start()
+                if (playback?.start() == true) {
+                    openAudioEffectSession(audioSessionId)
+                }
             }
         }
     }
@@ -117,6 +119,7 @@ class PlaybackManager(val context: Context) {
                 Playback is not an instance of RetroExoPlayer */
         if (playback !is RetroExoPlayer && crossFadeDuration == 0) {
             if (playback != null) {
+                closeAudioEffectSession()
                 playback?.release()
             }
             playback = null
@@ -124,6 +127,7 @@ class PlaybackManager(val context: Context) {
             return true
         } else if (playback !is CrossFadePlayer && crossFadeDuration > 0) {
             if (playback != null) {
+                closeAudioEffectSession()
                 playback?.release()
             }
             playback = null
@@ -139,22 +143,32 @@ class PlaybackManager(val context: Context) {
         closeAudioEffectSession()
     }
 
-    private fun openAudioEffectSession() {
+    fun updateAudioEffectSession(sessionId: Int) {
+        if (playback?.isPlaying == true) {
+            openAudioEffectSession(sessionId)
+        }
+    }
+
+    private fun openAudioEffectSession(sessionId: Int) {
+        if (sessionId <= 0 || audioEffectSessionId == sessionId) return
+
+        closeAudioEffectSession()
         val intent = Intent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION)
-        intent.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, audioSessionId)
+        intent.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, sessionId)
         intent.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, context.packageName)
         intent.putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
         context.sendBroadcast(intent)
+        audioEffectSessionId = sessionId
     }
 
     private fun closeAudioEffectSession() {
+        if (audioEffectSessionId <= 0) return
+
         val audioEffectsIntent = Intent(AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION)
-        if (playback != null) {
-            audioEffectsIntent.putExtra(AudioEffect.EXTRA_AUDIO_SESSION,
-                playback!!.audioSessionId)
-        }
+        audioEffectsIntent.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, audioEffectSessionId)
         audioEffectsIntent.putExtra(AudioEffect.EXTRA_PACKAGE_NAME, context.packageName)
         context.sendBroadcast(audioEffectsIntent)
+        audioEffectSessionId = 0
     }
 
     fun switchToLocalPlayback(onChange: (wasPlaying: Boolean, progress: Int) -> Unit) {
@@ -174,6 +188,7 @@ class PlaybackManager(val context: Context) {
         playback: Playback,
         onChange: (wasPlaying: Boolean, progress: Int) -> Unit,
     ) {
+        closeAudioEffectSession()
         val oldPlayback = this.playback
         val wasPlaying: Boolean = oldPlayback?.isPlaying == true
         val progress: Int = oldPlayback?.position() ?: 0
