@@ -1443,7 +1443,6 @@ class MusicService : MediaBrowserServiceCompat(),
         mediaSession?.setCallback(mediaSessionCallback)
         mediaSession?.isActive = true
         mediaSession?.setMediaButtonReceiver(mediaButtonReceiverPendingIntent)
-        mediaSession?.let { setSessionToken(it.sessionToken) }
     }
 
     inner class MusicBinder : Binder() {
