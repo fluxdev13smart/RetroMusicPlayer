@@ -652,6 +652,7 @@ class MusicService : MediaBrowserServiceCompat(),
         clientUid: Int,
         rootHints: Bundle?,
     ): BrowserRoot {
+        Log.i(TAG, "Media browser client connecting: $clientPackageName (uid $clientUid)")
 
 
         // Check origin to ensure we're not allowing any arbitrary app to browse app contents
@@ -668,7 +669,12 @@ class MusicService : MediaBrowserServiceCompat(),
             val isRecentRequest = rootHints?.getBoolean(BrowserRoot.EXTRA_RECENT) ?: false
             val browserRootPath =
                 if (isRecentRequest) AutoMediaIDHelper.RECENT_ROOT else AutoMediaIDHelper.MEDIA_ID_ROOT
-            BrowserRoot(browserRootPath, null)
+            val extras = Bundle().apply {
+                putBoolean("android.media.browse.CONTENT_STYLE_SUPPORTED", true)
+                putInt("android.media.browse.CONTENT_STYLE_BROWSABLE_HINT", 1)
+                putInt("android.media.browse.CONTENT_STYLE_PLAYABLE_HINT", 1)
+            }
+            BrowserRoot(browserRootPath, extras)
         }
     }
 
@@ -1033,6 +1039,11 @@ class MusicService : MediaBrowserServiceCompat(),
         val intent = Intent(what.replace(RETRO_MUSIC_PACKAGE_NAME, MUSIC_PACKAGE_NAME))
         val song = currentSong
         intent.putExtra("id", song.id)
+        intent.putExtra("songid", song.id)
+        intent.putExtra("albumid", song.albumId)
+        intent.putExtra("title", song.title)
+        intent.putExtra("ListSize", playingQueue.size.toLong())
+        intent.putExtra("ListPosition", getPosition().toLong())
         intent.putExtra("artist", song.artistName)
         intent.putExtra("album", song.albumName)
         intent.putExtra("track", song.title)
@@ -1050,6 +1061,20 @@ class MusicService : MediaBrowserServiceCompat(),
         } else {
             setShuffleMode(SHUFFLE_MODE_NONE)
         }
+    }
+
+    private var lastMetadata: MediaMetadataCompat? = null
+
+    private fun publishMetadata(metadata: MediaMetadataCompat) {
+        lastMetadata = metadata
+        mediaSession?.setMetadata(metadata)
+    }
+
+    /** Some car displays only read the track info when playback starts, so send it again. */
+    private fun resendMetadata() {
+        val metadata = lastMetadata ?: return
+        if (currentSong.id == -1L) return
+        mediaSession?.setMetadata(metadata)
     }
 
     fun updateMediaSessionPlaybackState() {
@@ -1130,7 +1155,7 @@ class MusicService : MediaBrowserServiceCompat(),
                             R.drawable.default_audio_art
                         )
                     )
-                    mediaSession?.setMetadata(metaData.build())
+                    publishMetadata(metaData.build())
                     onCompletion()
                 }
 
@@ -1146,14 +1171,14 @@ class MusicService : MediaBrowserServiceCompat(),
                         MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON,
                         resource
                     )
-                    mediaSession?.setMetadata(metaData.build())
+                    publishMetadata(metaData.build())
                     onCompletion()
                 }
 
                 override fun onLoadCleared(placeholder: Drawable?) {}
             })
         } else {
-            mediaSession?.setMetadata(metaData.build())
+            publishMetadata(metaData.build())
             onCompletion()
         }
     }
@@ -1161,6 +1186,7 @@ class MusicService : MediaBrowserServiceCompat(),
     private fun handleChangeInternal(what: String) {
         when (what) {
             PLAY_STATE_CHANGED -> {
+                resendMetadata()
                 updateMediaSessionPlaybackState()
                 attachEqualizer()
                 FloatingMiniPlayer.refresh()
