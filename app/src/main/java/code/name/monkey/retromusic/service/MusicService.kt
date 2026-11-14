@@ -66,6 +66,9 @@ import code.name.monkey.retromusic.PLAYBACK_SPEED
 import code.name.monkey.retromusic.R
 import code.name.monkey.retromusic.TOGGLE_HEADSET
 import code.name.monkey.retromusic.activities.LockScreenActivity
+import code.name.monkey.retromusic.activities.MainActivity
+import code.name.monkey.retromusic.extensions.albumArtUri
+import code.name.monkey.retromusic.util.PreferenceUtil
 import code.name.monkey.retromusic.appwidgets.AppWidgetBig
 import code.name.monkey.retromusic.appwidgets.AppWidgetCard
 import code.name.monkey.retromusic.appwidgets.AppWidgetCircle
@@ -203,6 +206,8 @@ class MusicService : MediaBrowserServiceCompat(),
     private var audioDeviceCallback: AudioDeviceCallback? = null
     private var headsetReceiverRegistered = false
     private var mediaSession: MediaSessionCompat? = null
+    var equalizerController: EqualizerController? = null
+        private set
     private lateinit var mediaStoreObserver: ContentObserver
     private var musicPlayerHandlerThread: HandlerThread? = null
     private var notHandledMetaChangedForCurrentTrack = false
@@ -315,6 +320,8 @@ class MusicService : MediaBrowserServiceCompat(),
         playerHandler = Handler(musicPlayerHandlerThread!!.looper)
 
         playbackManager = PlaybackManager(this)
+        equalizerController = EqualizerController(this)
+        FloatingMiniPlayer.attachService(this)
         playbackManager.setCallbacks(this)
         setupMediaSession()
 
@@ -377,6 +384,9 @@ class MusicService : MediaBrowserServiceCompat(),
             getSystemService<AudioManager>()?.unregisterAudioDeviceCallback(audioDeviceCallback!!)
         }
         mediaSession?.isActive = false
+        FloatingMiniPlayer.attachService(null)
+        equalizerController?.release()
+        equalizerController = null
         quit()
         releaseResources()
         serviceScope.cancel()
@@ -645,7 +655,9 @@ class MusicService : MediaBrowserServiceCompat(),
 
 
         // Check origin to ensure we're not allowing any arbitrary app to browse app contents
-        return if (!mPackageValidator!!.isKnownCaller(clientPackageName, clientUid)) {
+        return if (!PreferenceUtil.allowAllMediaClients &&
+            !mPackageValidator!!.isKnownCaller(clientPackageName, clientUid)
+        ) {
             // Request from an untrusted package: return an empty browser root
             BrowserRoot(AutoMediaIDHelper.MEDIA_ID_EMPTY_ROOT, null)
         } else {
@@ -1048,6 +1060,8 @@ class MusicService : MediaBrowserServiceCompat(),
                 songProgressMillis.toLong(),
                 playbackSpeed
             )
+            .setBufferedPosition(currentSong.duration)
+            .setActiveQueueItemId(currentSong.hashCode().toLong())
         setCustomAction(stateBuilder)
         mediaSession?.setPlaybackState(stateBuilder.build())
     }
@@ -1072,6 +1086,18 @@ class MusicService : MediaBrowserServiceCompat(),
             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ARTIST, song.albumArtist)
             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, song.albumName)
             .putString(MediaMetadataCompat.METADATA_KEY_TITLE, song.title)
+            .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, song.title)
+            .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE, song.artistName)
+            .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_DESCRIPTION, song.albumName)
+            .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, song.id.toString())
+            .putString(
+                MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI,
+                song.albumArtUri.toString()
+            )
+            .putString(
+                MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON_URI,
+                song.albumArtUri.toString()
+            )
             .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, song.duration)
             .putLong(
                 MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER,
@@ -1083,7 +1109,7 @@ class MusicService : MediaBrowserServiceCompat(),
 
         // We must send the album art in METADATA_KEY_ALBUM_ART key on A13+ or
         // else album art is blurry in notification
-        if (isAlbumArtOnLockScreen || VersionUtils.hasT()) {
+        if (isAlbumArtOnLockScreen || VersionUtils.hasT() || PreferenceUtil.allowAllMediaClients) {
             // val screenSize: Point = RetroUtil.getScreenSize(this)
             val request = Glide.with(this)
                 .asBitmap()
@@ -1116,6 +1142,10 @@ class MusicService : MediaBrowserServiceCompat(),
                         MediaMetadataCompat.METADATA_KEY_ALBUM_ART,
                         resource
                     )
+                    metaData.putBitmap(
+                        MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON,
+                        resource
+                    )
                     mediaSession?.setMetadata(metaData.build())
                     onCompletion()
                 }
@@ -1132,6 +1162,8 @@ class MusicService : MediaBrowserServiceCompat(),
         when (what) {
             PLAY_STATE_CHANGED -> {
                 updateMediaSessionPlaybackState()
+                attachEqualizer()
+                FloatingMiniPlayer.refresh()
                 val isPlaying = isPlaying
                 if (!isPlaying && songProgressMillis > 0) {
                     savePositionInTrack()
@@ -1149,6 +1181,8 @@ class MusicService : MediaBrowserServiceCompat(),
             }
 
             META_CHANGED -> {
+                attachEqualizer()
+                FloatingMiniPlayer.refresh()
                 // We must call updateMediaSessionPlaybackState after the load of album art is completed
                 // if we are loading it or it won't be updated in the notification
                 updateMediaSessionMetaData {
@@ -1184,6 +1218,15 @@ class MusicService : MediaBrowserServiceCompat(),
                     stopForegroundAndNotification()
                 }
             }
+        }
+    }
+
+    private fun attachEqualizer() {
+        try {
+            val controller = equalizerController ?: return
+            if (controller.isEnabled) controller.attach(audioSessionId)
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not attach equalizer", e)
         }
     }
 
@@ -1431,6 +1474,13 @@ class MusicService : MediaBrowserServiceCompat(),
         )
         val mediaSessionCallback = MediaSessionCallback(this)
         mediaSession?.setCallback(mediaSessionCallback)
+        mediaSession?.setSessionActivity(
+            PendingIntent.getActivity(
+                applicationContext, 0,
+                Intent(applicationContext, MainActivity::class.java),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        )
         mediaSession?.isActive = true
         mediaSession?.setMediaButtonReceiver(mediaButtonReceiverPendingIntent)
     }

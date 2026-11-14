@@ -392,6 +392,17 @@ object PreferenceUtil {
 
     val isSpeakerDisabled get() = sharedPreferences.getBoolean("disable_speaker", false)
 
+    /** Lets any app (e.g. a car's media system) connect to the media browser service. */
+    val allowAllMediaClients
+        get() = sharedPreferences.getBoolean(
+            code.name.monkey.retromusic.ALLOW_ALL_MEDIA_CLIENTS, true
+        )
+
+    val isFloatingMiniPlayer
+        get() = sharedPreferences.getBoolean(
+            code.name.monkey.retromusic.FLOATING_MINI_PLAYER, false
+        )
+
     val isBlurredAlbumArt
         get() = sharedPreferences.getBoolean(
             BLURRED_ALBUM_ART, false

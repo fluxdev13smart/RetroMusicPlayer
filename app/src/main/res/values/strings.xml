@@ -526,4 +526,20 @@
     <string name="try_retro_music_premium" translatable="false" />
     <string name="listing_files" translatable="false" />
 
+    <string name="pref_title_allow_all_media_clients">Allow car and other media systems</string>
+    <string name="pref_summary_allow_all_media_clients">Lets any media system, such as a car display, connect and read what is playing. Turn off to only allow known apps.</string>
+    <string name="pref_title_floating_mini_player">Floating mini-player</string>
+    <string name="pref_summary_floating_mini_player">Show a small draggable player over other apps while music is playing</string>
+    <string name="floating_mini_player_permission">Allow \"Display over other apps\" for this app, then turn this on again</string>
+    <string name="pref_title_in_app_equalizer">Built-in equalizer</string>
+    <string name="pref_summary_in_app_equalizer">Adjust bands, bass and loudness for this app\'s audio, without needing a system equalizer</string>
+    <string name="eq_enable">Enable equalizer</string>
+    <string name="eq_preset">Preset</string>
+    <string name="eq_preset_custom">Custom</string>
+    <string name="eq_bass_boost">Bass boost</string>
+    <string name="eq_loudness">Loudness</string>
+    <string name="eq_reset">Reset to flat</string>
+    <string name="eq_play_first">Play a song first, then open the equalizer</string>
+    <string name="eq_not_supported">This device does not support the built-in equalizer</string>
+
 </resources>

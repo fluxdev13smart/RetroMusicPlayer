@@ -18,12 +18,18 @@ import android.Manifest.permission.BLUETOOTH_CONNECT
 import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.media.audiofx.AudioEffect
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.preference.Preference
 import code.name.monkey.appthemehelper.util.VersionUtils
 import code.name.monkey.retromusic.BLUETOOTH_PLAYBACK
 import code.name.monkey.retromusic.EQUALIZER
+import code.name.monkey.retromusic.FLOATING_MINI_PLAYER
+import code.name.monkey.retromusic.IN_APP_EQUALIZER
+import code.name.monkey.retromusic.dialogs.EqualizerDialog
+import code.name.monkey.retromusic.extensions.showToast
 import code.name.monkey.retromusic.R
 import code.name.monkey.retromusic.activities.base.AbsBaseActivity.Companion.BLUETOOTH_PERMISSION_REQUEST
 import code.name.monkey.retromusic.util.NavigationUtil
@@ -44,6 +50,24 @@ class AudioSettings : AbsSettingsFragment() {
         eqPreference?.setOnPreferenceClickListener {
             NavigationUtil.openEqualizer(requireActivity())
             true
+        }
+        findPreference<Preference>(IN_APP_EQUALIZER)?.setOnPreferenceClickListener {
+            EqualizerDialog().show(childFragmentManager, EqualizerDialog.TAG)
+            true
+        }
+        findPreference<Preference>(FLOATING_MINI_PLAYER)?.setOnPreferenceChangeListener { _, newValue ->
+            if (newValue as Boolean && !Settings.canDrawOverlays(requireContext())) {
+                requireContext().showToast(R.string.floating_mini_player_permission)
+                startActivity(
+                    Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + requireContext().packageName)
+                    )
+                )
+                false
+            } else {
+                true
+            }
         }
         val bluetoothPreference: Preference? = findPreference(BLUETOOTH_PLAYBACK)
         if (VersionUtils.hasS()) {

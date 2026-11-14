@@ -47,6 +47,28 @@ class App : Application() {
         }
         wallpaperAccentManager.init()
 
+        // Tell the floating mini-player whether any of our screens is visible
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            private var started = 0
+            override fun onActivityStarted(activity: android.app.Activity) {
+                started++
+                code.name.monkey.retromusic.service.FloatingMiniPlayer.setAppInForeground(true)
+            }
+
+            override fun onActivityStopped(activity: android.app.Activity) {
+                started = (started - 1).coerceAtLeast(0)
+                if (started == 0) {
+                    code.name.monkey.retromusic.service.FloatingMiniPlayer.setAppInForeground(false)
+                }
+            }
+
+            override fun onActivityCreated(a: android.app.Activity, b: android.os.Bundle?) {}
+            override fun onActivityResumed(a: android.app.Activity) {}
+            override fun onActivityPaused(a: android.app.Activity) {}
+            override fun onActivitySaveInstanceState(a: android.app.Activity, b: android.os.Bundle) {}
+            override fun onActivityDestroyed(a: android.app.Activity) {}
+        })
+
         if (VersionUtils.hasNougatMR())
             DynamicShortcutManager(this).initDynamicShortcuts()
 
