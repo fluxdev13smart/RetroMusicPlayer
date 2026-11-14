@@ -1,0 +1,42 @@
+name: Build APK release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ car-eq-floating-player ]
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build debug-signed APK (installable without a keystore)
+        run: ./gradlew :app:assembleNormalDebug
+      - name: Collect APK
+        run: |
+          mkdir -p out
+          cp app/build/outputs/apk/normal/debug/*.apk out/RetroMusic-car-eq-floating.apk
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RetroMusic-car-eq-floating
+          path: out/RetroMusic-car-eq-floating.apk
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: car-eq-floating-${{ github.run_number }}
+          name: Retro Music with car display, equalizer and floating player (build ${{ github.run_number }})
+          body: |
+            Debug-signed build of the `car-eq-floating-player` branch.
+            Installs next to the original app (package ends in .debug).
+          files: out/RetroMusic-car-eq-floating.apk
+          prerelease: true
