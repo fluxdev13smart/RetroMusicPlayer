@@ -77,3 +77,5 @@
 -keep class com.google.gson.reflect.TypeToken
 -keep class * extends com.google.gson.reflect.TypeToken
 -keep public class * implements java.lang.reflect.Type
+# Started through app_process by the cluster music helper
+-keep class code.name.monkey.retromusic.cluster.ClusterTool { *; }

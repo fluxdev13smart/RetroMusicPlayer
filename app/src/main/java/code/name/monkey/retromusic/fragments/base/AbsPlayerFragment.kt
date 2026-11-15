@@ -27,6 +27,7 @@ import android.view.GestureDetector
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.RelativeLayout
 import androidx.annotation.LayoutRes
 import androidx.appcompat.widget.Toolbar
@@ -343,9 +344,46 @@ abstract class AbsPlayerFragment(@LayoutRes layout: Int) : AbsMusicServiceFragme
         view.findViewById<RelativeLayout>(R.id.statusBarShadow)?.hide()
     }
 
+    private var snowOverlay: com.jetradarmobile.snowfall.SnowfallView? = null
+
+    /**
+     * The Normal player has its own snowfall view. Every other style gets one added here so the
+     * "snowfall" setting works no matter which now playing style is selected.
+     */
+    private fun updateSnowOverlay() {
+        val root = view as? ViewGroup ?: return
+        if (root.findViewById<View>(R.id.snowfall_view) != null) return
+        if (PreferenceUtil.isSnowFalling) {
+            val overlay = snowOverlay ?: com.jetradarmobile.snowfall.SnowfallView(
+                requireContext()
+            ).also {
+                it.layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+                snowOverlay = it
+                root.addView(it)
+            }
+            overlay.isVisible = true
+            overlay.restartFalling()
+        } else {
+            snowOverlay?.let {
+                it.stopFalling()
+                it.isVisible = false
+            }
+        }
+    }
+
+    override fun onDestroyView() {
+        snowOverlay?.stopFalling()
+        snowOverlay = null
+        super.onDestroyView()
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onResume() {
         super.onResume()
+        updateSnowOverlay()
         val nps = PreferenceUtil.nowPlayingScreen
 
         if (nps == NowPlayingScreen.Circle || nps == NowPlayingScreen.Peek || nps == NowPlayingScreen.Tiny) {

@@ -398,6 +398,13 @@ object PreferenceUtil {
             code.name.monkey.retromusic.ALLOW_ALL_MEDIA_CLIENTS, true
         )
 
+    val isClusterMusic
+        get() = sharedPreferences.getBoolean(code.name.monkey.retromusic.CLUSTER_MUSIC, false)
+
+    val clusterSource
+        get() = sharedPreferences.getString(code.name.monkey.retromusic.CLUSTER_SOURCE, "26")
+            ?.toIntOrNull() ?: 26
+
     val isFloatingMiniPlayer
         get() = sharedPreferences.getBoolean(
             code.name.monkey.retromusic.FLOATING_MINI_PLAYER, false

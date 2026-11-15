@@ -48,6 +48,22 @@
 
     <code.name.monkey.appthemehelper.common.prefs.supportv7.ATESwitchPreference
         android:defaultValue="false"
+        android:key="cluster_music"
+        android:layout="@layout/list_item_view_switch"
+        android:summary="@string/pref_summary_cluster_music"
+        android:title="@string/pref_title_cluster_music" />
+
+    <code.name.monkey.appthemehelper.common.prefs.supportv7.ATEListPreference
+        android:defaultValue="26"
+        android:entries="@array/pref_cluster_source_entries"
+        android:entryValues="@array/pref_cluster_source_values"
+        android:key="cluster_source"
+        android:layout="@layout/list_item_view"
+        android:title="@string/pref_title_cluster_source"
+        app:icon="@drawable/ic_equalizer" />
+
+    <code.name.monkey.appthemehelper.common.prefs.supportv7.ATESwitchPreference
+        android:defaultValue="false"
         android:key="floating_mini_player"
         android:layout="@layout/list_item_view_switch"
         android:summary="@string/pref_summary_floating_mini_player"

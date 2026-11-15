@@ -50,8 +50,6 @@ android {
         }
         getByName("debug") {
             signingConfig = theSigningConfig
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = " DEBUG"
         }
     }
 
@@ -160,6 +158,7 @@ dependencies {
 
     implementation(libs.keyboardvisibilityevent)
     implementation(libs.jetradarmobile.android.snowfall)
+    implementation(libs.dadb)
 
     implementation(libs.chrisbanes.insetter)
 

@@ -1,4 +1,5 @@
 [versions]
+dadb = "1.2.10"
 #buildscripts dependencies
 advrecyclerview = "1.0.0"
 jetradarmobile_androidSnowfall_version = "1.2.1"
@@ -96,6 +97,7 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 advrecyclerview = { module = "com.h6ah4i.android.widget.advrecyclerview:advrecyclerview", version.ref = "advrecyclerview" }
 fadingedgelayout = { module = "com.github.bosphere.android-fadingedgelayout:fadingedgelayout", version.ref = "fadingedgelayout" }
 keyboardvisibilityevent = { module = "net.yslibrary.keyboardvisibilityevent:keyboardvisibilityevent", version.ref = "yslibrary_keyboardvisibilityevent_version" }
+dadb = { module = "dev.mobile:dadb", version.ref = "dadb" }
 jetradarmobile-android-snowfall = { module = "com.github.jetradarmobile:android-snowfall", version.ref = "jetradarmobile_androidSnowfall_version" }
 chrisbanes-insetter = { module = "dev.chrisbanes.insetter:insetter", version.ref = "chrisbanes_insetter_version" }
 org-eclipse-egit-github-core = { module = "org.eclipse.mylyn.github:org.eclipse.egit.github.core", version.ref = "orgEclipseEgitGithubCore" }

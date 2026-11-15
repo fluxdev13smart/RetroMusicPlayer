@@ -36,7 +36,7 @@ jobs:
           tag_name: car-eq-floating-${{ github.run_number }}
           name: Retro Music with car display, equalizer and floating player (build ${{ github.run_number }})
           body: |
-            Debug-signed build of the `car-eq-floating-player` branch.
-            Installs next to the original app (package ends in .debug).
+            Build of the `car-eq-floating-player` branch, signed with a debug key.
+            Same app name and package as the normal Retro Music, so uninstall the original first.
           files: out/RetroMusic-car-eq-floating.apk
           prerelease: true

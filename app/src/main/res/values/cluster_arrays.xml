@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="pref_cluster_source_entries" translatable="false">
+        <item>Third-party player (26)</item>
+        <item>Other source (11)</item>
+    </string-array>
+    <string-array name="pref_cluster_source_values" translatable="false">
+        <item>26</item>
+        <item>11</item>
+    </string-array>
+</resources>

@@ -206,6 +206,7 @@ class MusicService : MediaBrowserServiceCompat(),
     private var audioDeviceCallback: AudioDeviceCallback? = null
     private var headsetReceiverRegistered = false
     private var mediaSession: MediaSessionCompat? = null
+    private var clusterBridge: code.name.monkey.retromusic.cluster.ClusterMusicBridge? = null
     var equalizerController: EqualizerController? = null
         private set
     private lateinit var mediaStoreObserver: ContentObserver
@@ -385,6 +386,14 @@ class MusicService : MediaBrowserServiceCompat(),
         }
         mediaSession?.isActive = false
         FloatingMiniPlayer.attachService(null)
+        clusterBridge?.let {
+            it.stop(
+                PreferenceUtil.clusterSource,
+                code.name.monkey.retromusic.cluster.ClusterMusicBridge.DEFAULT_PORT
+            )
+            it.release()
+        }
+        clusterBridge = null
         equalizerController?.release()
         equalizerController = null
         quit()
@@ -1187,6 +1196,7 @@ class MusicService : MediaBrowserServiceCompat(),
         when (what) {
             PLAY_STATE_CHANGED -> {
                 resendMetadata()
+                updateCluster()
                 updateMediaSessionPlaybackState()
                 attachEqualizer()
                 FloatingMiniPlayer.refresh()
@@ -1207,6 +1217,7 @@ class MusicService : MediaBrowserServiceCompat(),
             }
 
             META_CHANGED -> {
+                updateCluster()
                 attachEqualizer()
                 FloatingMiniPlayer.refresh()
                 // We must call updateMediaSessionPlaybackState after the load of album art is completed
@@ -1244,6 +1255,34 @@ class MusicService : MediaBrowserServiceCompat(),
                     stopForegroundAndNotification()
                 }
             }
+        }
+    }
+
+    private fun updateCluster() {
+        if (!PreferenceUtil.isClusterMusic) return
+        try {
+            val bridge = clusterBridge
+                ?: code.name.monkey.retromusic.cluster.ClusterMusicBridge(this)
+                    .also { clusterBridge = it }
+            val port = code.name.monkey.retromusic.cluster.ClusterMusicBridge.DEFAULT_PORT
+            val song = currentSong
+            if (song.id == -1L) {
+                bridge.stop(PreferenceUtil.clusterSource, port)
+            } else {
+                bridge.update(
+                    song.title,
+                    song.artistName,
+                    if (isPlaying) {
+                        code.name.monkey.retromusic.cluster.ClusterMusicBridge.STATE_PLAYING
+                    } else {
+                        code.name.monkey.retromusic.cluster.ClusterMusicBridge.STATE_PAUSED
+                    },
+                    PreferenceUtil.clusterSource,
+                    port
+                )
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Cluster update failed", e)
         }
     }
 
