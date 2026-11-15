@@ -355,7 +355,7 @@ abstract class AbsPlayerFragment(@LayoutRes layout: Int) : AbsMusicServiceFragme
         if (root.findViewById<View>(R.id.snowfall_view) != null) return
         if (PreferenceUtil.isSnowFalling) {
             val overlay = snowOverlay ?: com.jetradarmobile.snowfall.SnowfallView(
-                requireContext()
+                requireContext(), null
             ).also {
                 it.layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
