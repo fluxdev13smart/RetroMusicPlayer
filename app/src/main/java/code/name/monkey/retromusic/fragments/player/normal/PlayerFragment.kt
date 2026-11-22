@@ -76,17 +76,21 @@ class PlayerFragment : AbsPlayerFragment(R.layout.fragment_player),
         valueAnimator?.setDuration(ViewUtil.RETRO_MUSIC_ANIM_TIME.toLong())?.start()
     }
 
+    /** Top color currently on screen, so the next song fades from it instead of from the surface. */
+    private var lastGradientTop = 0
+
     private fun colorizeCoverGradient(cover: Int) {
         valueAnimator?.cancel()
         val dark = !surfaceColor().isColorLight
         valueAnimator = ValueAnimator.ofObject(
             ArgbEvaluator(),
-            surfaceColor(),
+            if (lastGradientTop != 0) lastGradientTop else surfaceColor(),
             code.name.monkey.retromusic.util.CoverGradient.top(cover, dark)
         )
         valueAnimator?.addUpdateListener { animation ->
             if (isAdded && _binding != null) {
                 val top = animation.animatedValue as Int
+                lastGradientTop = top
                 binding.colorGradientBackground.background = DrawableGradient(
                     GradientDrawable.Orientation.TOP_BOTTOM,
                     intArrayOf(
