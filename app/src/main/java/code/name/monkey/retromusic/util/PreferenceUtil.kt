@@ -398,6 +398,11 @@ object PreferenceUtil {
             code.name.monkey.retromusic.ALLOW_ALL_MEDIA_CLIENTS, true
         )
 
+    val isCoverGradientTheme
+        get() = sharedPreferences.getBoolean(
+            code.name.monkey.retromusic.COVER_GRADIENT_THEME, false
+        )
+
     val isClusterMusic
         get() = sharedPreferences.getBoolean(code.name.monkey.retromusic.CLUSTER_MUSIC, false)
 

@@ -46,6 +46,11 @@ class EqualizerController(context: Context) {
         get() = prefs.getInt(KEY_BASS, 0)
         private set(value) = prefs.edit().putInt(KEY_BASS, value).apply()
 
+    /** 0..100. Raises the lowest bands and the bass boost together, for a felt "boom". */
+    var bassLevel: Int
+        get() = prefs.getInt(KEY_BASS_LEVEL, 0)
+        private set(value) = prefs.edit().putInt(KEY_BASS_LEVEL, value).apply()
+
     var loudnessGainMb: Int
         get() = prefs.getInt(KEY_LOUDNESS, 0)
         private set(value) = prefs.edit().putInt(KEY_LOUDNESS, value).apply()
@@ -145,6 +150,12 @@ class EqualizerController(context: Context) {
     }
 
     @Synchronized
+    fun setBassLevel(level: Int) {
+        bassLevel = level.coerceIn(0, 100)
+        apply()
+    }
+
+    @Synchronized
     fun setLoudness(gainMb: Int) {
         loudnessGainMb = gainMb
         apply()
@@ -155,6 +166,7 @@ class EqualizerController(context: Context) {
         saveLevels(emptyList())
         selectedPreset = -1
         bassBoostStrength = 0
+        bassLevel = 0
         loudnessGainMb = 0
         apply()
     }
@@ -165,18 +177,25 @@ class EqualizerController(context: Context) {
             equalizer?.let { eq ->
                 val levels = savedLevels()
                 val range = eq.bandLevelRange
+                // The lowest bands (below 250 Hz) get the extra bass; at most two of them.
+                val bassBands = (0 until eq.numberOfBands)
+                    .filter { eq.getCenterFreq(it.toShort()) / 1000 < 250 }
+                    .take(2)
+                val bassOffset = (bassLevel / 100f * minOf(range[1].toInt(), 700)).toInt()
                 for (band in 0 until eq.numberOfBands) {
-                    val level = (levels.getOrNull(band) ?: 0)
+                    val extra = if (band in bassBands) bassOffset else 0
+                    val level = ((levels.getOrNull(band) ?: 0) + extra)
                         .coerceIn(range[0].toInt(), range[1].toInt())
                     eq.setBandLevel(band.toShort(), level.toShort())
                 }
                 eq.enabled = enabled
             }
             bassBoost?.let { bb ->
+                val strength = (bassBoostStrength + bassLevel * 7).coerceAtMost(1000)
                 if (bb.strengthSupported) {
-                    bb.setStrength(bassBoostStrength.toShort())
+                    bb.setStrength(strength.toShort())
                 }
-                bb.enabled = enabled && bassBoostStrength > 0
+                bb.enabled = enabled && strength > 0
             }
             loudness?.let { le ->
                 le.setTargetGain(loudnessGainMb)
@@ -210,6 +229,7 @@ class EqualizerController(context: Context) {
         private const val KEY_ENABLED = "enabled"
         private const val KEY_PRESET = "preset"
         private const val KEY_LEVELS = "band_levels"
+        private const val KEY_BASS_LEVEL = "bass_level"
         private const val KEY_BASS = "bass_boost"
         private const val KEY_LOUDNESS = "loudness_gain"
     }

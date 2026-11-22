@@ -76,6 +76,29 @@ class PlayerFragment : AbsPlayerFragment(R.layout.fragment_player),
         valueAnimator?.setDuration(ViewUtil.RETRO_MUSIC_ANIM_TIME.toLong())?.start()
     }
 
+    private fun colorizeCoverGradient(cover: Int) {
+        valueAnimator?.cancel()
+        val dark = !surfaceColor().isColorLight
+        valueAnimator = ValueAnimator.ofObject(
+            ArgbEvaluator(),
+            surfaceColor(),
+            code.name.monkey.retromusic.util.CoverGradient.top(cover, dark)
+        )
+        valueAnimator?.addUpdateListener { animation ->
+            if (isAdded && _binding != null) {
+                val top = animation.animatedValue as Int
+                binding.colorGradientBackground.background = DrawableGradient(
+                    GradientDrawable.Orientation.TOP_BOTTOM,
+                    intArrayOf(
+                        top,
+                        code.name.monkey.retromusic.util.CoverGradient.bottom(top, dark)
+                    ), 0
+                )
+            }
+        }
+        valueAnimator?.setDuration(ViewUtil.RETRO_MUSIC_ANIM_TIME.toLong())?.start()
+    }
+
     override fun onShow() {
         controlsFragment.show()
     }
@@ -97,7 +120,9 @@ class PlayerFragment : AbsPlayerFragment(R.layout.fragment_player),
             requireActivity()
         )
 
-        if (PreferenceUtil.isAdaptiveColor) {
+        if (PreferenceUtil.isCoverGradientTheme) {
+            colorizeCoverGradient(color.backgroundColor)
+        } else if (PreferenceUtil.isAdaptiveColor) {
             colorize(color.backgroundColor)
         }
     }

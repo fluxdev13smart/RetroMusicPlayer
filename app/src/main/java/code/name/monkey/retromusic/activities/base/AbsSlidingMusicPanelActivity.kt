@@ -429,7 +429,9 @@ abstract class AbsSlidingMusicPanelActivity : AbsMusicServiceActivity(),
             navigationBarColor = surfaceColor()
             setTaskDescColor(paletteColor)
             val isColorLight = paletteColor.isColorLight
-            if (PreferenceUtil.isAdaptiveColor && (nowPlayingScreen == Normal || nowPlayingScreen == Flat || nowPlayingScreen == Material)) {
+            if ((PreferenceUtil.isAdaptiveColor && (nowPlayingScreen == Normal || nowPlayingScreen == Flat || nowPlayingScreen == Material)) ||
+                (PreferenceUtil.isCoverGradientTheme && nowPlayingScreen == Normal)
+            ) {
                 setLightNavigationBar(true)
                 setLightStatusBar(isColorLight)
             } else if (nowPlayingScreen == Card || nowPlayingScreen == Blur || nowPlayingScreen == BlurCard) {

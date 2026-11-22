@@ -545,4 +545,7 @@
     <string name="pref_title_cluster_music">Song on BYD driver display</string>
     <string name="pref_summary_cluster_music">Shows the playing song on the car\'s instrument cluster. Needs ADB over network (wireless debugging) turned on in the car, and the connection approved once on the screen.</string>
     <string name="pref_title_cluster_source">Cluster source value</string>
+    <string name="pref_title_cover_gradient_theme">Cover gradient theme</string>
+    <string name="pref_summary_cover_gradient_theme">Normal player only: the background becomes a gradient of the song\'s cover color and the buttons match it. Applies from the next song.</string>
+    <string name="eq_bass_punch">Bass punch</string>
 </resources>
