@@ -81,7 +81,7 @@ class EqualizerDialog : DialogFragment() {
         // One slider for the "boom": lifts the low bands and the bass boost together
         root.addView(label(getString(R.string.eq_bass_punch)))
         root.addView(simpleSeek(100, eq.bassLevel) { level ->
-            eq.setBassLevel(level)
+            eq.changeBassLevel(level)
             if (level > 0 && !eq.isEnabled) {
                 eq.enable(true)
                 enableSwitch.isChecked = true

@@ -150,7 +150,7 @@ class EqualizerController(context: Context) {
     }
 
     @Synchronized
-    fun setBassLevel(level: Int) {
+    fun changeBassLevel(level: Int) {
         bassLevel = level.coerceIn(0, 100)
         apply()
     }
