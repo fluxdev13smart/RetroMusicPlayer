@@ -90,21 +90,11 @@ class PlayerPlaybackControlsFragment :
                 MaterialValueHelper.getPrimaryDisabledTextColor(requireContext(), false)
         }
 
-        val darkTheme = !ColorUtil.isColorLight(colorBg)
-        val colorFinal = if (PreferenceUtil.isCoverGradientTheme) {
-            code.name.monkey.retromusic.util.CoverGradient.buttons(color.backgroundColor, darkTheme)
-        } else if (PreferenceUtil.isAdaptiveColor) {
+        val colorFinal = if (PreferenceUtil.isAdaptiveColor) {
             color.primaryTextColor
         } else {
             accentColor()
         }.ripAlpha()
-
-        if (PreferenceUtil.isCoverGradientTheme) {
-            // Previous, next, shuffle and repeat use the same tint as the play button
-            lastPlaybackControlsColor = colorFinal
-            lastDisabledPlaybackControlsColor =
-                androidx.core.graphics.ColorUtils.setAlphaComponent(colorFinal, 102)
-        }
 
         TintHelper.setTintAuto(
             binding.playPauseButton,

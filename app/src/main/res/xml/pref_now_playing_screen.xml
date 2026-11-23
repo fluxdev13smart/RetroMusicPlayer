@@ -21,13 +21,6 @@
         android:layout="@layout/list_item_view_switch_no_title"
         android:title="@string/pref_snow_fall_title" />
 
-    <code.name.monkey.appthemehelper.common.prefs.supportv7.ATESwitchPreference
-        android:defaultValue="false"
-        android:key="cover_gradient_theme"
-        android:layout="@layout/list_item_view_switch"
-        android:summary="@string/pref_summary_cover_gradient_theme"
-        android:title="@string/pref_title_cover_gradient_theme" />
-
     <code.name.monkey.appthemehelper.common.prefs.supportv7.ATEListPreference
         android:defaultValue="0"
         android:entries="@array/pref_lyrics_type_entries"
@@ -76,7 +69,7 @@
 
         <code.name.monkey.appthemehelper.common.prefs.supportv7.ATESwitchPreference
             android:layout="@layout/list_item_view_switch"
-            app:defaultValue="false"
+            app:defaultValue="true"
             app:icon="@drawable/ic_view_carousel"
             app:key="carousel_effect"
             app:summary="@string/pref_summary_carousel_effect"

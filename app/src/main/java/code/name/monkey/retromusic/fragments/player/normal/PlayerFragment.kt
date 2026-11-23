@@ -51,6 +51,9 @@ class PlayerFragment : AbsPlayerFragment(R.layout.fragment_player),
     private val binding get() = _binding!!
 
 
+    /** Top color currently on screen, so the next song fades from it instead of from the surface. */
+    private var lastShownColor = 0
+
     private fun colorize(i: Int) {
         if (valueAnimator != null) {
             valueAnimator?.cancel()
@@ -58,11 +61,12 @@ class PlayerFragment : AbsPlayerFragment(R.layout.fragment_player),
 
         valueAnimator = ValueAnimator.ofObject(
             ArgbEvaluator(),
-            surfaceColor(),
+            if (lastShownColor != 0) lastShownColor else surfaceColor(),
             i
         )
         valueAnimator?.addUpdateListener { animation ->
             if (isAdded) {
+                lastShownColor = animation.animatedValue as Int
                 val drawable = DrawableGradient(
                     GradientDrawable.Orientation.TOP_BOTTOM,
                     intArrayOf(
@@ -71,33 +75,6 @@ class PlayerFragment : AbsPlayerFragment(R.layout.fragment_player),
                     ), 0
                 )
                 binding.colorGradientBackground.background = drawable
-            }
-        }
-        valueAnimator?.setDuration(ViewUtil.RETRO_MUSIC_ANIM_TIME.toLong())?.start()
-    }
-
-    /** Top color currently on screen, so the next song fades from it instead of from the surface. */
-    private var lastGradientTop = 0
-
-    private fun colorizeCoverGradient(cover: Int) {
-        valueAnimator?.cancel()
-        val dark = !surfaceColor().isColorLight
-        valueAnimator = ValueAnimator.ofObject(
-            ArgbEvaluator(),
-            if (lastGradientTop != 0) lastGradientTop else surfaceColor(),
-            code.name.monkey.retromusic.util.CoverGradient.top(cover, dark)
-        )
-        valueAnimator?.addUpdateListener { animation ->
-            if (isAdded && _binding != null) {
-                val top = animation.animatedValue as Int
-                lastGradientTop = top
-                binding.colorGradientBackground.background = DrawableGradient(
-                    GradientDrawable.Orientation.TOP_BOTTOM,
-                    intArrayOf(
-                        top,
-                        code.name.monkey.retromusic.util.CoverGradient.bottom(top, dark)
-                    ), 0
-                )
             }
         }
         valueAnimator?.setDuration(ViewUtil.RETRO_MUSIC_ANIM_TIME.toLong())?.start()
@@ -124,9 +101,7 @@ class PlayerFragment : AbsPlayerFragment(R.layout.fragment_player),
             requireActivity()
         )
 
-        if (PreferenceUtil.isCoverGradientTheme) {
-            colorizeCoverGradient(color.backgroundColor)
-        } else if (PreferenceUtil.isAdaptiveColor) {
+        if (PreferenceUtil.isAdaptiveColor) {
             colorize(color.backgroundColor)
         }
     }
