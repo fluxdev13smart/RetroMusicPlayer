@@ -1,11 +1,13 @@
 package code.name.monkey.retromusic.service
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -21,6 +23,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import code.name.monkey.retromusic.R
 import code.name.monkey.retromusic.activities.MainActivity
+import code.name.monkey.retromusic.cluster.ClusterMusicBridge
+import code.name.monkey.retromusic.extensions.showToast
 import code.name.monkey.retromusic.glide.RetroGlideExtension.getSongModel
 import code.name.monkey.retromusic.glide.RetroGlideExtension.songCoverOptions
 import code.name.monkey.retromusic.util.PreferenceUtil
@@ -53,6 +57,88 @@ object FloatingMiniPlayer {
     private var dismissedUntilNextForeground = false
 
     private val refreshRunnable = Runnable { refreshNow() }
+
+    /** Set while the person is on the system permission screen, so we can switch on after it. */
+    private var pendingEnable = false
+
+    /** True when the setting is on and the system allows drawing over other apps. */
+    fun isOn(context: Context): Boolean =
+        PreferenceUtil.isFloatingMiniPlayer && Settings.canDrawOverlays(context)
+
+    /** Text for the player menu item, e.g. "Floating player: On". */
+    fun menuTitle(context: Context): String = context.getString(
+        if (isOn(context)) R.string.floating_player_on else R.string.floating_player_off
+    )
+
+    /** Switches the floating player on or off. Returns the new state. */
+    fun toggle(activity: Activity): Boolean {
+        if (isOn(activity)) {
+            PreferenceUtil.isFloatingMiniPlayer = false
+            refresh()
+            return false
+        }
+        if (Settings.canDrawOverlays(activity)) {
+            PreferenceUtil.isFloatingMiniPlayer = true
+            activity.showToast(R.string.floating_player_turned_on)
+            return true
+        }
+        pendingEnable = true
+        requestPermission(activity)
+        return false
+    }
+
+    /**
+     * Call when the player screen comes back. If the person just allowed "Display over other
+     * apps", the floating player is switched on without another tap. Returns true if it was.
+     */
+    fun finishPendingEnable(context: Context): Boolean {
+        if (!pendingEnable) return false
+        pendingEnable = false
+        if (!Settings.canDrawOverlays(context)) return false
+        PreferenceUtil.isFloatingMiniPlayer = true
+        context.showToast(R.string.floating_player_turned_on)
+        return true
+    }
+
+    /**
+     * Opens the system screen for "Display over other apps". Some car systems do not have it; then
+     * the permission is given through the car's own ADB, if that is available.
+     */
+    fun requestPermission(context: Context) {
+        val intents = listOf(
+            Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:" + context.packageName)
+            ),
+            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+        )
+        for (intent in intents) {
+            try {
+                if (context !is Activity) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+                context.showToast(R.string.floating_player_need_permission)
+                return
+            } catch (e: Exception) {
+                // Try the next form, then the ADB fallback.
+            }
+        }
+        val appContext = context.applicationContext
+        Thread {
+            val granted = ClusterMusicBridge.grantOverlayPermission(
+                appContext, ClusterMusicBridge.DEFAULT_PORT
+            )
+            mainHandler.post {
+                if (granted) {
+                    pendingEnable = false
+                    PreferenceUtil.isFloatingMiniPlayer = true
+                    appContext.showToast(R.string.floating_player_permission_granted)
+                } else {
+                    pendingEnable = false
+                    appContext.showToast(R.string.floating_player_permission_failed)
+                }
+            }
+        }.start()
+    }
 
     fun attachService(service: MusicService?) {
         serviceRef = service?.let { WeakReference(it) }

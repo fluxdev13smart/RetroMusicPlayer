@@ -50,6 +50,7 @@ import code.name.monkey.retromusic.db.toSongEntity
 import code.name.monkey.retromusic.dialogs.AddToPlaylistDialog
 import code.name.monkey.retromusic.dialogs.CreatePlaylistDialog
 import code.name.monkey.retromusic.dialogs.DeleteSongsDialog
+import code.name.monkey.retromusic.dialogs.EqualizerDialog
 import code.name.monkey.retromusic.dialogs.PlaybackSpeedDialog
 import code.name.monkey.retromusic.dialogs.SleepTimerDialog
 import code.name.monkey.retromusic.dialogs.SongDetailDialog
@@ -68,6 +69,7 @@ import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.interfaces.IPaletteColorHolder
 import code.name.monkey.retromusic.model.Song
 import code.name.monkey.retromusic.repository.RealRepository
+import code.name.monkey.retromusic.service.FloatingMiniPlayer
 import code.name.monkey.retromusic.service.MusicService
 import code.name.monkey.retromusic.util.NavigationUtil
 import code.name.monkey.retromusic.util.PreferenceUtil
@@ -203,7 +205,14 @@ abstract class AbsPlayerFragment(@LayoutRes layout: Int) : AbsMusicServiceFragme
             }
 
             R.id.action_equalizer -> {
-                NavigationUtil.openEqualizer(requireActivity())
+                // The built-in equalizer, so there is no need to go through the settings.
+                EqualizerDialog().show(childFragmentManager, EqualizerDialog.TAG)
+                return true
+            }
+
+            R.id.action_floating_player -> {
+                FloatingMiniPlayer.toggle(requireActivity())
+                item.title = FloatingMiniPlayer.menuTitle(requireContext())
                 return true
             }
 
@@ -380,6 +389,10 @@ abstract class AbsPlayerFragment(@LayoutRes layout: Int) : AbsMusicServiceFragme
     override fun onResume() {
         super.onResume()
         updateSnowOverlay()
+        // Back from the "Display over other apps" screen: switch on if it was just allowed.
+        FloatingMiniPlayer.finishPendingEnable(requireContext())
+        playerToolbar()?.menu?.findItem(R.id.action_floating_player)?.title =
+            FloatingMiniPlayer.menuTitle(requireContext())
         val nps = PreferenceUtil.nowPlayingScreen
 
         if (nps == NowPlayingScreen.Circle || nps == NowPlayingScreen.Peek || nps == NowPlayingScreen.Tiny) {

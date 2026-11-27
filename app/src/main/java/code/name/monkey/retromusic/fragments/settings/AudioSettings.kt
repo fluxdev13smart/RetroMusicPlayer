@@ -18,18 +18,27 @@ import android.Manifest.permission.BLUETOOTH_CONNECT
 import android.content.Intent
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.media.audiofx.AudioEffect
-import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.preference.Preference
 import code.name.monkey.appthemehelper.util.VersionUtils
 import code.name.monkey.retromusic.BLUETOOTH_PLAYBACK
+import code.name.monkey.retromusic.CLUSTER_TEST
 import code.name.monkey.retromusic.EQUALIZER
 import code.name.monkey.retromusic.FLOATING_MINI_PLAYER
 import code.name.monkey.retromusic.IN_APP_EQUALIZER
 import code.name.monkey.retromusic.dialogs.EqualizerDialog
+import code.name.monkey.retromusic.cluster.ClusterMusicBridge
+import code.name.monkey.retromusic.extensions.colorButtons
+import code.name.monkey.retromusic.extensions.materialDialog
 import code.name.monkey.retromusic.extensions.showToast
+import code.name.monkey.retromusic.helper.MusicPlayerRemote
+import code.name.monkey.retromusic.service.FloatingMiniPlayer
+import code.name.monkey.retromusic.util.PreferenceUtil
 import code.name.monkey.retromusic.R
 import code.name.monkey.retromusic.activities.base.AbsBaseActivity.Companion.BLUETOOTH_PERMISSION_REQUEST
 import code.name.monkey.retromusic.util.NavigationUtil
@@ -58,16 +67,15 @@ class AudioSettings : AbsSettingsFragment() {
         findPreference<Preference>(FLOATING_MINI_PLAYER)?.setOnPreferenceChangeListener { _, newValue ->
             if (newValue as Boolean && !Settings.canDrawOverlays(requireContext())) {
                 requireContext().showToast(R.string.floating_mini_player_permission)
-                startActivity(
-                    Intent(
-                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + requireContext().packageName)
-                    )
-                )
+                FloatingMiniPlayer.requestPermission(requireActivity())
                 false
             } else {
                 true
             }
+        }
+        findPreference<Preference>(CLUSTER_TEST)?.setOnPreferenceClickListener {
+            runClusterTest()
+            true
         }
         val bluetoothPreference: Preference? = findPreference(BLUETOOTH_PLAYBACK)
         if (VersionUtils.hasS()) {
@@ -88,6 +96,31 @@ class AudioSettings : AbsSettingsFragment() {
                 return@setOnPreferenceChangeListener true
             }
         }
+    }
+
+    /** Sends a test text to the driver display and shows a step by step report. */
+    private fun runClusterTest() {
+        val appContext = requireContext().applicationContext
+        requireContext().showToast(R.string.cluster_testing, Toast.LENGTH_LONG)
+        val source = PreferenceUtil.clusterSource
+        Thread {
+            val report =
+                ClusterMusicBridge.diagnose(appContext, source, ClusterMusicBridge.DEFAULT_PORT)
+            activity?.runOnUiThread {
+                if (isAdded) {
+                    materialDialog(R.string.cluster_test_title)
+                        .setMessage(report)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .create()
+                        .colorButtons()
+                        .show()
+                }
+                // Leave the test text up for a moment, then put the real song back.
+                Handler(Looper.getMainLooper()).postDelayed({
+                    MusicPlayerRemote.musicService?.forceUpdateCluster()
+                }, 15_000L)
+            }
+        }.start()
     }
 
     private fun hasEqualizer(): Boolean {

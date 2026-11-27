@@ -54,6 +54,7 @@ class MainActivity : AbsCastActivity() {
         setupNavigationController()
 
         WhatsNewFragment.showChangeLog(this)
+        code.name.monkey.retromusic.service.AutoStartPlayback.onAppOpened(this)
     }
 
     private fun setupNavigationController() {

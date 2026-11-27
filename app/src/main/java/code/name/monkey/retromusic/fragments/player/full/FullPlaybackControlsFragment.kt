@@ -196,6 +196,8 @@ class FullPlaybackControlsFragment :
             popupMenu.inflate(R.menu.menu_player)
             popupMenu.menu.findItem(R.id.action_toggle_favorite).isVisible = false
             popupMenu.menu.findItem(R.id.action_toggle_lyrics).isChecked = PreferenceUtil.showLyrics
+            popupMenu.menu.findItem(R.id.action_floating_player)?.title =
+                code.name.monkey.retromusic.service.FloatingMiniPlayer.menuTitle(requireContext())
             popupMenu.show()
         }
     }

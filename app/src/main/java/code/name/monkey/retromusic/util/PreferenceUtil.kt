@@ -399,16 +399,32 @@ object PreferenceUtil {
         )
 
     val isClusterMusic
-        get() = sharedPreferences.getBoolean(code.name.monkey.retromusic.CLUSTER_MUSIC, false)
+        get() = sharedPreferences.getBoolean(code.name.monkey.retromusic.CLUSTER_MUSIC, true)
+
+    /** Resume the last song a while after the app is opened, at a low volume. */
+    val isAutoStartPlayback
+        get() = sharedPreferences.getBoolean(code.name.monkey.retromusic.AUTO_START_PLAYBACK, false)
+
+    /** Seconds to wait after the app is opened before the song starts. */
+    val autoStartDelaySeconds
+        get() = sharedPreferences.getString(code.name.monkey.retromusic.AUTO_START_DELAY, "10")
+            ?.toIntOrNull() ?: 10
+
+    /** Highest music volume (percent of the device maximum) used when the song starts. */
+    val autoStartVolume
+        get() = sharedPreferences.getInt(code.name.monkey.retromusic.AUTO_START_VOLUME, 20)
 
     val clusterSource
         get() = sharedPreferences.getString(code.name.monkey.retromusic.CLUSTER_SOURCE, "26")
             ?.toIntOrNull() ?: 26
 
-    val isFloatingMiniPlayer
+    var isFloatingMiniPlayer
         get() = sharedPreferences.getBoolean(
             code.name.monkey.retromusic.FLOATING_MINI_PLAYER, false
         )
+        set(value) = sharedPreferences.edit {
+            putBoolean(code.name.monkey.retromusic.FLOATING_MINI_PLAYER, value)
+        }
 
     val isBlurredAlbumArt
         get() = sharedPreferences.getBoolean(

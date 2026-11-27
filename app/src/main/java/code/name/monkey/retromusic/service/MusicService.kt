@@ -14,6 +14,7 @@
 package code.name.monkey.retromusic.service
 
 import android.annotation.SuppressLint
+import android.animation.ValueAnimator
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -121,6 +122,7 @@ import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent.get
@@ -386,6 +388,8 @@ class MusicService : MediaBrowserServiceCompat(),
         }
         mediaSession?.isActive = false
         FloatingMiniPlayer.attachService(null)
+        startRamp?.cancel()
+        startRamp = null
         clusterBridge?.let {
             it.stop(
                 PreferenceUtil.clusterSource,
@@ -737,6 +741,7 @@ class MusicService : MediaBrowserServiceCompat(),
 
                     ACTION_PAUSE -> pause()
                     ACTION_PLAY -> play()
+                    ACTION_AUTO_START -> startPlaybackQuietly(PreferenceUtil.autoStartVolume)
                     ACTION_PLAY_PLAYLIST -> playFromPlaylist(intent)
                     ACTION_REWIND -> back(true)
                     ACTION_SKIP -> playNextSong(true)
@@ -1258,6 +1263,57 @@ class MusicService : MediaBrowserServiceCompat(),
         }
     }
 
+    /** Writes the current song to the driver display again, even if it was sent before. */
+    fun forceUpdateCluster() {
+        clusterBridge?.invalidate()
+        updateCluster()
+    }
+
+    private var startRamp: ValueAnimator? = null
+
+    /**
+     * Resumes the last song quietly. Used by the "play last song when the app opens" setting:
+     * the music volume is lowered to [volumePercent] if it is louder, and the song fades in.
+     */
+    fun startPlaybackQuietly(volumePercent: Int) {
+        serviceScope.launch {
+            // The saved queue is restored when the service starts; give that time to finish.
+            var waited = 0L
+            while (!queuesRestored && playingQueue.isEmpty() && waited < 10_000L) {
+                delay(200)
+                waited += 200
+            }
+            if (isPlaying || playingQueue.isEmpty()) return@launch
+
+            limitSystemVolume(volumePercent)
+            // Use our own fade-in unless the person already set an audio fade time.
+            val ownFade = PreferenceUtil.audioFadeDuration == 0
+            if (ownFade) playbackManager.playback?.setVolume(0f)
+            play()
+            if (ownFade) {
+                startRamp?.cancel()
+                startRamp = ValueAnimator.ofFloat(0f, 1f).apply {
+                    duration = AUTO_START_FADE_MS
+                    addUpdateListener { playbackManager.playback?.setVolume(it.animatedValue as Float) }
+                    start()
+                }
+            }
+        }
+    }
+
+    private fun limitSystemVolume(percent: Int) {
+        try {
+            val audioManager = getSystemService<AudioManager>() ?: return
+            val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            val target = ((max * percent.coerceIn(1, 100) + 50) / 100).coerceAtLeast(1)
+            if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) > target) {
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not lower the volume", e)
+        }
+    }
+
     private fun updateCluster() {
         if (!PreferenceUtil.isClusterMusic) return
         try {
@@ -1561,6 +1617,8 @@ class MusicService : MediaBrowserServiceCompat(),
         const val MUSIC_PACKAGE_NAME = "com.android.music"
         const val ACTION_TOGGLE_PAUSE = "$RETRO_MUSIC_PACKAGE_NAME.togglepause"
         const val ACTION_PLAY = "$RETRO_MUSIC_PACKAGE_NAME.play"
+        private const val AUTO_START_FADE_MS = 5000L
+        const val ACTION_AUTO_START = "$RETRO_MUSIC_PACKAGE_NAME.autostart"
         const val ACTION_PLAY_PLAYLIST = "$RETRO_MUSIC_PACKAGE_NAME.play.playlist"
         const val ACTION_PAUSE = "$RETRO_MUSIC_PACKAGE_NAME.pause"
         const val ACTION_STOP = "$RETRO_MUSIC_PACKAGE_NAME.stop"
